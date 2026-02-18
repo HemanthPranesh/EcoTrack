@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EcoTrack</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>🌍 EcoTrack Dashboard</h1>
+
+  <!-- LOGIN CARD -->
+  <div class="card" id="loginCard">
+
+  <h2>Login</h2>
+  <input type="email" id="loginEmail" placeholder="Email">
+  <input type="password" id="loginPassword" placeholder="Password">
+  <button onclick="login()">Login</button>
+
+  <hr>
+
+  <h2>Register</h2>
+  <input type="text" id="regName" placeholder="Name">
+  <input type="email" id="regEmail" placeholder="Email">
+  <input type="password" id="regPassword" placeholder="Password">
+  <input type="text" id="regRegion" placeholder="Region (e.g. Coimbatore)">
+  <button onclick="register()">Register</button>
+
+</div>
+
+  <!-- DASHBOARD -->
+  <div class="card" id="dashboard" style="display:none;">
+
+    <h2 id="welcome"></h2>
+
+    <!-- METRICS GRID -->
+    <div class="metric-grid">
+
+      <div class="metric">
+        <h3>Total Carbon Saved</h3>
+        <p id="carbon">0 kg</p>
+      </div>
+
+      <div class="metric">
+        <h3>Trees Equivalent 🌳</h3>
+        <p id="trees">0</p>
+      </div>
+
+      <div class="metric">
+        <h3>Total Actions</h3>
+        <p id="actions">0</p>
+      </div>
+
+      <div class="metric">
+        <h3>Eco Level</h3>
+        <p id="level">Eco Starter</p>
+      </div>
+
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+      <div id="progressBar" style="width:0%;"></div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div style="margin-top:30px;">
+      <h3>Log Eco Action</h3>
+
+      <button onclick="addAction('Public Transport',2)">
+        🚍 Public Transport (+2)
+      </button>
+
+      <button onclick="addAction('Recycle',0.5)">
+        ♻️ Recycle (+0.5)
+      </button>
+
+      <button onclick="addAction('Avoid Plastic',0.1)">
+        🛍 Avoid Plastic (+0.1)
+      </button>
+
+      <button onclick="addAction('Save Electricity',0.8)">
+        💡 Save Electricity (+0.8)
+      </button>
+
+      <button onclick="addAction('Plant Tree',10)">
+        🌳 Plant Tree (+10)
+      </button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="leaderboard-container">
+      <h3>🏆 Leaderboard</h3>
+      <ul id="leaderboard"></ul>
+    </div>
+
+    <!-- COMMUNITY IMPACT -->
+    <div class="community-box">
+      🌍 Community Total Impact: 
+      <span id="community">0</span> kg CO₂ Saved
+    </div>
+
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>
