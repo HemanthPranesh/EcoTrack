@@ -8,6 +8,7 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.static("public"));
 
 // Connect to SQLite Database
@@ -21,17 +22,16 @@ const db = new sqlite3.Database("./database.db", (err) => {
 // Create Tables
 db.serialize(() => {
   db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    email TEXT UNIQUE,
-    password TEXT,
-    region TEXT,
-    totalCarbon REAL DEFAULT 0,
-    totalActions INTEGER DEFAULT 0
-  )
-`);
-
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      email TEXT UNIQUE,
+      password TEXT,
+      region TEXT,
+      totalCarbon REAL DEFAULT 0,
+      totalActions INTEGER DEFAULT 0
+    )
+  `);
 
   db.run(`
     CREATE TABLE IF NOT EXISTS actions (
@@ -45,101 +45,9 @@ db.serialize(() => {
 });
 
 
-// Create User
-app.post("/create-user", (req, res) => {
-  const { name } = req.body;
+// ===================== AUTH =====================
 
-  db.run(
-    `INSERT INTO users (name, totalCarbon, totalActions) VALUES (?, 0, 0)`,
-    [name],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ userId: this.lastID });
-    }
-  );
-});
-
-
-// Add Action
-app.post("/add-action", (req, res) => {
-  const { userId, actionType, carbonValue } = req.body;
-
-  db.run(
-    `INSERT INTO actions (userId, actionType, carbonValue) VALUES (?, ?, ?)`,
-    [userId, actionType, carbonValue],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-
-      db.run(
-        `UPDATE users 
-         SET totalCarbon = totalCarbon + ?, 
-             totalActions = totalActions + 1 
-         WHERE id = ?`,
-        [carbonValue, userId],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: err.message });
-          }
-
-          res.json({ message: "Action added successfully" });
-        }
-      );
-    }
-  );
-});
-
-
-// Get User Data
-app.get("/user/:id", (req, res) => {
-  const userId = req.params.id;
-
-  db.get(
-    `SELECT * FROM users WHERE id = ?`,
-    [userId],
-    (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json(row);
-    }
-  );
-});
-
-
-// Leaderboard
-app.get("/leaderboard", (req, res) => {
-  app.get("/leaderboard/:region", (req, res) => {
-  const region = req.params.region;
-
-  db.all(
-    `SELECT * FROM users 
-     WHERE region = ?
-     ORDER BY totalCarbon DESC 
-     LIMIT 5`,
-    [region],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
-    }
-  );
-// Community Total Carbon
-app.get("/community-total", (req, res) => {
-  db.get(
-    `SELECT SUM(totalCarbon) as total FROM users`,
-    [],
-    (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ total: row.total || 0 });
-    }
-  );
-});
-// REGISTER API
+// REGISTER
 app.post("/register", (req, res) => {
   const { name, email, password, region } = req.body;
 
@@ -159,7 +67,8 @@ app.post("/register", (req, res) => {
     }
   );
 });
-// LOGIN API
+
+// LOGIN
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -176,6 +85,88 @@ app.post("/login", (req, res) => {
   );
 });
 
+
+// ===================== CORE APIs =====================
+
+// Add Action
+app.post("/add-action", (req, res) => {
+  const { userId, actionType, carbonValue } = req.body;
+
+  db.run(
+    `INSERT INTO actions (userId, actionType, carbonValue) VALUES (?, ?, ?)`,
+    [userId, actionType, carbonValue],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      db.run(
+        `UPDATE users
+         SET totalCarbon = totalCarbon + ?,
+             totalActions = totalActions + 1
+         WHERE id = ?`,
+        [carbonValue, userId],
+        function (err) {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          }
+
+          res.json({ message: "Action added successfully" });
+        }
+      );
+    }
+  );
+});
+
+// Get User Data
+app.get("/user/:id", (req, res) => {
+  const userId = req.params.id;
+
+  db.get(
+    `SELECT * FROM users WHERE id = ?`,
+    [userId],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(row);
+    }
+  );
+});
+
+// Leaderboard by Region
+app.get("/leaderboard/:region", (req, res) => {
+  const region = req.params.region;
+
+  db.all(
+    `SELECT * FROM users 
+     WHERE region = ?
+     ORDER BY totalCarbon DESC 
+     LIMIT 5`,
+    [region],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    }
+  );
+});
+
+// Community Total
+app.get("/community-total", (req, res) => {
+  db.get(
+    `SELECT SUM(totalCarbon) as total FROM users`,
+    [],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ total: row.total || 0 });
+    }
+  );
+});
+
+
+// ===================== START SERVER =====================
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
